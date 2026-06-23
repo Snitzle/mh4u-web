@@ -234,7 +234,7 @@ export default async function MonsterPage({
       {monster.quests && monster.quests.length > 0 && (
         <Section title="Appears in quests">
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {monster.quests.map((quest) => (
+            {Array.from(new Map(monster.quests.map((q) => [q.id, q])).values()).map((quest) => (
               <Card key={quest.id} href={`/quests/${quest.id}`}>
                 <div className="truncate text-sm font-medium text-white/90 group-hover:text-accent">
                   {quest.name}
