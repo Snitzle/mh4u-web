@@ -25,10 +25,26 @@ export async function generateMetadata({
 }
 
 const ELEMENTS = ["fire", "water", "thunder", "ice", "dragon"] as const;
+const AILMENTS = ["poison", "paralysis", "sleep"] as const;
+const TRAPS = ["pitfall_trap", "shock_trap", "flash_bomb", "sonic_bomb", "dung_bomb", "meat"] as const;
+
+type HitzoneKey = "cut" | "impact" | "shot" | "fire" | "water" | "ice" | "thunder" | "dragon" | "ko";
+
+const HITZONE_COLS: { key: HitzoneKey; label: string }[] = [
+  { key: "cut", label: "Cut" },
+  { key: "impact", label: "Impact" },
+  { key: "shot", label: "Shot" },
+  { key: "fire", label: "Fire" },
+  { key: "water", label: "Water" },
+  { key: "ice", label: "Ice" },
+  { key: "thunder", label: "Thunder" },
+  { key: "dragon", label: "Dragon" },
+  { key: "ko", label: "KO" },
+];
 
 function Rating({ value }: { value: number }) {
   return (
-    <span className="font-mono text-sm">
+    <span className="font-mono text-sm" title={String(value)}>
       {[0, 1, 2].map((i) => (
         <span key={i} className={i < value ? "text-accent" : "text-white/15"}>
           ●
@@ -36,6 +52,24 @@ function Rating({ value }: { value: number }) {
       ))}
     </span>
   );
+}
+
+function RatingRow({ items }: { items: { label: string; value: number }[] }) {
+  return (
+    <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+      {items.map(({ label, value }) => (
+        <div key={label} className="flex items-center gap-1.5">
+          <span className="text-xs capitalize text-white/50">{label.replace("_", " ")}</span>
+          <Rating value={value} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function cell(value: number | null): string {
+  if (value === null || value < 0) return "—";
+  return String(value);
 }
 
 export default async function MonsterPage({
@@ -59,22 +93,100 @@ export default async function MonsterPage({
         </div>
       </div>
 
+      {monster.ailments && monster.ailments.length > 0 && (
+        <Section title="Inflicts">
+          <div className="flex flex-wrap gap-2">
+            {monster.ailments.map((ailment) => (
+              <Pill key={ailment}>{ailment}</Pill>
+            ))}
+          </div>
+        </Section>
+      )}
+
       {monster.weaknesses && monster.weaknesses.length > 0 && (
-        <Section title="Weaknesses">
-          <div className="grid gap-3 sm:grid-cols-2">
+        <Section title="Effectiveness">
+          <div className="grid gap-3 lg:grid-cols-2">
             {monster.weaknesses.map((weakness) => (
-              <div key={weakness.state} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="mb-2 text-sm font-semibold text-white/80">{weakness.state}</div>
-                <div className="flex flex-wrap gap-x-5 gap-y-1.5">
-                  {ELEMENTS.map((element) => (
-                    <div key={element} className="flex items-center gap-1.5">
-                      <span className="w-14 text-xs capitalize text-white/50">{element}</span>
-                      <Rating value={weakness.elements[element]} />
-                    </div>
-                  ))}
+              <div key={weakness.state} className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="text-sm font-semibold text-white/80">{weakness.state}</div>
+                <div>
+                  <div className="mb-1 text-[11px] uppercase tracking-wide text-white/30">Elements</div>
+                  <RatingRow items={ELEMENTS.map((e) => ({ label: e, value: weakness.elements[e] }))} />
+                </div>
+                <div>
+                  <div className="mb-1 text-[11px] uppercase tracking-wide text-white/30">Status</div>
+                  <RatingRow items={AILMENTS.map((a) => ({ label: a, value: weakness.ailments[a] }))} />
+                </div>
+                <div>
+                  <div className="mb-1 text-[11px] uppercase tracking-wide text-white/30">Traps &amp; bombs</div>
+                  <RatingRow items={TRAPS.map((t) => ({ label: t, value: weakness.traps[t] ?? 0 }))} />
                 </div>
               </div>
             ))}
+          </div>
+        </Section>
+      )}
+
+      {monster.damage && monster.damage.length > 0 && (
+        <Section title="Hitzones">
+          <div className="overflow-x-auto rounded-xl border border-white/10">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[11px] uppercase tracking-wide text-white/40">
+                  <th className="px-3 py-2">Part</th>
+                  {HITZONE_COLS.map((col) => (
+                    <th key={col.key} className="px-3 py-2 text-right">
+                      {col.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {monster.damage.map((zone) => (
+                  <tr key={zone.body_part} className="border-t border-white/5">
+                    <td className="px-3 py-2 font-medium text-white/90">{zone.body_part}</td>
+                    {HITZONE_COLS.map((col) => (
+                      <td key={col.key} className="px-3 py-2 text-right tabular-nums text-white/70">
+                        {cell(zone[col.key])}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      )}
+
+      {monster.statuses && monster.statuses.length > 0 && (
+        <Section title="Status tolerance">
+          <div className="overflow-x-auto rounded-xl border border-white/10">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[11px] uppercase tracking-wide text-white/40">
+                  <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2 text-right">Initial</th>
+                  <th className="px-3 py-2 text-right">Buildup</th>
+                  <th className="px-3 py-2 text-right">Max</th>
+                  <th className="px-3 py-2 text-right">Duration</th>
+                  <th className="px-3 py-2 text-right">Damage</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monster.statuses.map((status) => (
+                  <tr key={status.status} className="border-t border-white/5">
+                    <td className="px-3 py-2 font-medium text-white/90">{status.status}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-white/70">{cell(status.initial)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-white/70">{cell(status.increase)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-white/70">{cell(status.max)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-white/70">
+                      {status.duration ? `${status.duration}s` : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums text-white/70">{status.damage || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </Section>
       )}

@@ -44,6 +44,15 @@ export interface MonsterWeakness {
   traps: Record<string, number>;
 }
 
+export interface MonsterStatus {
+  status: string;
+  initial: number | null;
+  increase: number | null;
+  max: number | null;
+  duration: number | null;
+  damage: number | null;
+}
+
 export interface HuntingReward {
   condition: string;
   rank: string;
@@ -65,7 +74,7 @@ export interface Monster extends MonsterSummary {
   trait: string;
   damage?: MonsterDamage[];
   weaknesses?: MonsterWeakness[];
-  statuses?: { status: string; initial: number | null; max: number | null }[];
+  statuses?: MonsterStatus[];
   ailments?: string[];
   habitats?: MonsterHabitat[];
   hunting_rewards?: Record<string, HuntingReward[]>;
