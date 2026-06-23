@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { api } from "@/lib/api/client";
 import { Card, Icon, PageHeading, RarityBadge } from "@/components/ui";
 import { FilterChips } from "@/components/Filters";
+import { NavSelect } from "@/components/NavSelect";
 import { Pagination } from "@/components/Pagination";
 import { RARITY_OPTIONS } from "@/lib/url";
 
@@ -12,23 +13,40 @@ const SLOTS = ["Head", "Body", "Arms", "Waist", "Legs"].map((slot) => ({ value: 
 export default async function ArmorPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; slot?: string; rarity?: string }>;
+  searchParams: Promise<{ page?: string; slot?: string; rarity?: string; skill?: string }>;
 }) {
-  const { page, slot, rarity } = await searchParams;
-  const armor = await api.armorList({
-    page,
-    per_page: 50,
-    "filter[slot]": slot,
-    "filter[rarity]": rarity,
-  });
+  const { page, slot, rarity, skill } = await searchParams;
+
+  const [armor, skillTrees] = await Promise.all([
+    api.armorList({
+      page,
+      per_page: 50,
+      "filter[slot]": slot,
+      "filter[rarity]": rarity,
+      "filter[skill]": skill,
+    }),
+    api.skillTrees({ per_page: 200 }),
+  ]);
+
+  const skillOptions = skillTrees.data.map((tree) => ({ value: String(tree.id), label: tree.name }));
+  const query = { slot, rarity, skill };
 
   return (
     <div>
       <PageHeading title="Armor" subtitle={`${armor.meta.total} pieces`} />
 
       <div className="mb-6 space-y-3">
-        <FilterChips label="Slot" param="slot" options={SLOTS} active={slot} basePath="/armor" query={{ slot, rarity }} />
-        <FilterChips label="Rarity" param="rarity" options={RARITY_OPTIONS} active={rarity} basePath="/armor" query={{ slot, rarity }} />
+        <FilterChips label="Slot" param="slot" options={SLOTS} active={slot} basePath="/armor" query={query} />
+        <FilterChips label="Rarity" param="rarity" options={RARITY_OPTIONS} active={rarity} basePath="/armor" query={query} />
+        <NavSelect
+          label="Skill"
+          param="skill"
+          value={skill}
+          options={skillOptions}
+          placeholder="Any skill"
+          basePath="/armor"
+          query={query}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -53,7 +71,7 @@ export default async function ArmorPage({
 
       <Pagination
         basePath="/armor"
-        query={{ page, slot, rarity }}
+        query={{ page, slot, rarity, skill }}
         currentPage={armor.meta.current_page}
         lastPage={armor.meta.last_page}
         total={armor.meta.total}

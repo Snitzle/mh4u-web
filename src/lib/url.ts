@@ -21,3 +21,15 @@ export const STAR_OPTIONS = Array.from({ length: 10 }, (_, i) => ({
   value: String(i + 1),
   label: '★'.repeat(i + 1),
 }));
+
+/** Weapon elements / ailments. */
+export const ELEMENT_OPTIONS = [
+  'Fire', 'Water', 'Thunder', 'Ice', 'Dragon', 'Blastblight', 'Poison', 'Paralysis', 'Sleep',
+].map((element) => ({ value: element, label: element }));
+
+/** Item types present in the database. */
+export const ITEM_TYPE_OPTIONS = [
+  'Account', 'Ammo', 'Bait', 'Bone', 'Book', 'Bug', 'Coating', 'Coin/Ticket', 'Commodity',
+  'Consumable', 'Decoration', 'Fish', 'Flesh', 'Meat', 'Nectar', 'Ore', 'Plant', 'Sac/Fluid',
+  'Scrap', 'Supply', 'Tool', 'Wystone',
+].map((type) => ({ value: type, label: type }));

@@ -3,7 +3,7 @@ import { api } from "@/lib/api/client";
 import { Card, Icon, PageHeading, RarityBadge } from "@/components/ui";
 import { FilterChips } from "@/components/Filters";
 import { Pagination } from "@/components/Pagination";
-import { RARITY_OPTIONS } from "@/lib/url";
+import { ELEMENT_OPTIONS, RARITY_OPTIONS } from "@/lib/url";
 
 export const metadata: Metadata = { title: "Weapons" };
 
@@ -16,23 +16,26 @@ const WEAPON_TYPES = [
 export default async function WeaponsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; wtype?: string; rarity?: string }>;
+  searchParams: Promise<{ page?: string; wtype?: string; rarity?: string; element?: string }>;
 }) {
-  const { page, wtype, rarity } = await searchParams;
+  const { page, wtype, rarity, element } = await searchParams;
   const weapons = await api.weapons({
     page,
     per_page: 50,
     "filter[wtype]": wtype,
     "filter[rarity]": rarity,
+    "filter[element]": element,
   });
+  const query = { wtype, rarity, element };
 
   return (
     <div>
       <PageHeading title="Weapons" subtitle={`${weapons.meta.total} weapons`} />
 
       <div className="mb-6 space-y-3">
-        <FilterChips label="Type" param="wtype" options={WEAPON_TYPES} active={wtype} basePath="/weapons" query={{ wtype, rarity }} />
-        <FilterChips label="Rarity" param="rarity" options={RARITY_OPTIONS} active={rarity} basePath="/weapons" query={{ wtype, rarity }} />
+        <FilterChips label="Type" param="wtype" options={WEAPON_TYPES} active={wtype} basePath="/weapons" query={query} />
+        <FilterChips label="Element" param="element" options={ELEMENT_OPTIONS} active={element} basePath="/weapons" query={query} />
+        <FilterChips label="Rarity" param="rarity" options={RARITY_OPTIONS} active={rarity} basePath="/weapons" query={query} />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -56,7 +59,7 @@ export default async function WeaponsPage({
 
       <Pagination
         basePath="/weapons"
-        query={{ page, wtype, rarity }}
+        query={{ page, wtype, rarity, element }}
         currentPage={weapons.meta.current_page}
         lastPage={weapons.meta.last_page}
         total={weapons.meta.total}

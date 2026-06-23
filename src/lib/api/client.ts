@@ -10,6 +10,7 @@ import type {
   Quest,
   QuestSummary,
   SearchResults,
+  SkillTreeSummary,
   Weapon,
   WeaponSummary,
 } from './types';
@@ -62,6 +63,8 @@ export const api = {
 
   quests: (query?: FetchOptions['query']) => apiGet<Paginated<QuestSummary>>('/quests', { query }),
   quest: (id: number | string) => apiGet<Detail<Quest>>(`/quests/${id}`),
+
+  skillTrees: (query?: FetchOptions['query']) => apiGet<Paginated<SkillTreeSummary>>('/skill-trees', { query }),
 
   search: (q: string, types?: string) =>
     apiGet<SearchResults>('/search', { query: { q, types }, revalidate: 0 }),

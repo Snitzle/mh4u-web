@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { api } from "@/lib/api/client";
 import { Card, Icon, PageHeading, RarityBadge } from "@/components/ui";
 import { FilterChips } from "@/components/Filters";
+import { NavSelect } from "@/components/NavSelect";
 import { Pagination } from "@/components/Pagination";
-import { RARITY_OPTIONS } from "@/lib/url";
+import { ITEM_TYPE_OPTIONS, RARITY_OPTIONS } from "@/lib/url";
 
 export const metadata: Metadata = { title: "Items" };
 
@@ -25,7 +26,16 @@ export default async function ItemsPage({
     <div>
       <PageHeading title="Items" subtitle={`${items.meta.total} items`} />
 
-      <div className="mb-6">
+      <div className="mb-6 space-y-3">
+        <NavSelect
+          label="Type"
+          param="type"
+          value={type}
+          options={ITEM_TYPE_OPTIONS}
+          placeholder="Any type"
+          basePath="/items"
+          query={{ type, rarity }}
+        />
         <FilterChips label="Rarity" param="rarity" options={RARITY_OPTIONS} active={rarity} basePath="/items" query={{ type, rarity }} />
       </div>
 
