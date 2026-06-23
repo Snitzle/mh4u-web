@@ -39,6 +39,7 @@ export default async function QuestPage({
         <span className="text-accent">{"★".repeat(quest.stars)}</span>
         <Pill>{quest.hub}</Pill>
         <Pill>{quest.type}</Pill>
+        {quest.priority && <Pill>{quest.priority}</Pill>}
         {quest.location && <Pill>{quest.location.name}</Pill>}
       </div>
 
@@ -62,6 +63,22 @@ export default async function QuestPage({
                   <span className="font-medium text-white group-hover:text-accent">{monster.name}</span>
                 </div>
               </Card>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {quest.supplies && quest.supplies.length > 0 && (
+        <Section title="Supply items">
+          <div className="flex flex-wrap gap-2">
+            {quest.supplies.map((supply, index) => (
+              <span
+                key={index}
+                className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-white/80"
+              >
+                {supply.item}
+                {supply.quantity && supply.quantity > 1 ? ` ×${supply.quantity}` : ""}
+              </span>
             ))}
           </div>
         </Section>

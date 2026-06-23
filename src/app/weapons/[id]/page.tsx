@@ -2,8 +2,36 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { api } from "@/lib/api/client";
-import type { Weapon } from "@/lib/api/types";
+import type { SharpnessColour, Weapon } from "@/lib/api/types";
 import { Icon, Pill, Section, StatTile } from "@/components/ui";
+
+const SHARPNESS_COLOURS: { key: SharpnessColour; hex: string }[] = [
+  { key: "red", hex: "#d63b3b" },
+  { key: "orange", hex: "#e0822d" },
+  { key: "yellow", hex: "#e3cf2d" },
+  { key: "green", hex: "#46c046" },
+  { key: "blue", hex: "#3f86df" },
+  { key: "white", hex: "#e9e9e9" },
+  { key: "purple", hex: "#c77dff" },
+];
+
+function SharpnessBar({ values }: { values: Record<SharpnessColour, number> }) {
+  const total = SHARPNESS_COLOURS.reduce((sum, c) => sum + (values[c.key] || 0), 0);
+  if (total === 0) return <span className="text-sm text-white/40">—</span>;
+  return (
+    <div className="flex h-3 w-full max-w-md overflow-hidden rounded-sm">
+      {SHARPNESS_COLOURS.map((c) =>
+        (values[c.key] || 0) === 0 ? null : (
+          <div
+            key={c.key}
+            style={{ width: `${(values[c.key] / total) * 100}%`, backgroundColor: c.hex }}
+            title={`${c.key}: ${values[c.key]}`}
+          />
+        ),
+      )}
+    </div>
+  );
+}
 
 async function load(id: string): Promise<Weapon> {
   try {
@@ -56,16 +84,44 @@ export default async function WeaponPage({
           <StatTile label="Slots" value={"◯".repeat(weapon.num_slots) || "—"} />
         </div>
         {weapon.sharpness && (
-          <p className="mt-3 text-sm text-white/60">
-            <span className="text-white/40">Sharpness:</span> {weapon.sharpness}
-          </p>
-        )}
-        {weapon.ammo && (
-          <p className="mt-3 text-sm text-white/60">
-            <span className="text-white/40">Ammo:</span> {weapon.ammo}
-          </p>
+          <div className="mt-4 space-y-2">
+            <div>
+              <div className="mb-1 text-[11px] uppercase tracking-wide text-white/40">Sharpness</div>
+              <SharpnessBar values={weapon.sharpness.normal} />
+            </div>
+            <div>
+              <div className="mb-1 text-[11px] uppercase tracking-wide text-white/40">Sharpness +1</div>
+              <SharpnessBar values={weapon.sharpness.plus} />
+            </div>
+          </div>
         )}
       </Section>
+
+      {weapon.ammo && weapon.ammo.length > 0 && (
+        <Section title="Ammo">
+          <div className="overflow-x-auto rounded-xl border border-white/10">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[11px] uppercase tracking-wide text-white/40">
+                  <th className="px-3 py-2">Type</th>
+                  <th className="px-3 py-2 text-right">Capacity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {weapon.ammo.map((round, index) => (
+                  <tr key={index} className="border-t border-white/5">
+                    <td className="px-3 py-2 text-white/85">{round.item}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-white/70">
+                      {round.capacity}
+                      {round.special ? ` (+${round.special})` : ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      )}
 
       {weapon.melodies && weapon.melodies.length > 0 && (
         <Section title="Hunting Horn Melodies">
