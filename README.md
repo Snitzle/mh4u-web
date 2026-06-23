@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MH4U Database — Web
 
-## Getting Started
+> The web client for the **Monster Hunter 4 Ultimate** database. Browse monsters,
+> weapons, armor, decorations, items and quests, with universal search — all
+> served from the [mh4u-api](https://github.com/Snitzle/mh4u-api).
 
-First, run the development server:
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38BDF8?logo=tailwindcss&logoColor=white)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue)
+
+Built with Next.js 16 (App Router), React 19 and Tailwind CSS 4. The typed API
+client is generated from the API's OpenAPI spec.
+
+## Prerequisites
+
+- **Node.js 20+** and npm.
+- **The API running** at `http://localhost:8088`. Follow the setup in
+  [mh4u-api](https://github.com/Snitzle/mh4u-api) first — the quickest path is
+  `docker compose up --build` in that repo.
+
+## Getting started
 
 ```bash
+# 1. Make sure the API is up (see mh4u-api), then:
+npm install
+
+# 2. (Optional) copy the env template. The defaults already point at
+#    http://localhost:8088, so this is only needed to override them.
+cp .env.example .env.local
+
+# 3. Start the dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Every variable has a sensible default for local development (the API on
+`localhost:8088`), so a `.env.local` is optional. Override in `.env.local`:
 
-## Learn More
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `API_BASE_URL` | `http://localhost:8088/api/v1` | Base URL for **server-side** requests (SSR / route handlers) |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8088/api/v1` | Base URL for **browser** requests |
+| `NEXT_PUBLIC_ASSET_HOST` | `localhost` | Host that serves game images (`next/image` remote patterns). Host only — no scheme/port |
+| `API_DOCS_URL` | `http://localhost:8088/docs.openapi` | OpenAPI spec consumed by `npm run generate:api` |
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run dev          # start the dev server on :3000
+npm run build        # production build
+npm run start        # serve the production build
+npm run lint         # eslint
+npm run generate:api # regenerate the typed API client from the live API
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Regenerating the typed API client
 
-## Deploy on Vercel
+`src/lib/api/schema.d.ts` is generated from the API's OpenAPI spec and is **not**
+committed. With the API running:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run generate:api
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This reads `${API_DOCS_URL:-http://localhost:8088/docs.openapi}` and writes
+`src/lib/api/schema.d.ts`.
+
+## Project structure
+
+```
+src/
+  app/            # App Router pages (monsters, weapons, armor, items, quests, search)
+  components/     # Shared UI (Header, SearchBox, Filters, Pagination, …)
+  lib/
+    api/          # API client + types (client.ts, types.ts)
+    nav.ts        # Top-level navigation config
+    url.ts        # Query-string helpers
+```
+
+## Attribution & license
+
+The application source code is released under the [MIT License](LICENSE).
+
+*Monster Hunter 4 Ultimate*, all related names, assets and imagery are
+trademarks of **© CAPCOM CO., LTD.** This is an unofficial, non-commercial fan
+project and is not affiliated with or endorsed by Capcom. Game data lineage and
+attribution are documented in the [mh4u-api](https://github.com/Snitzle/mh4u-api)
+repository.
