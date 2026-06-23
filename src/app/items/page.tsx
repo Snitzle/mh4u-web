@@ -1,21 +1,33 @@
 import type { Metadata } from "next";
 import { api } from "@/lib/api/client";
 import { Card, Icon, PageHeading, RarityBadge } from "@/components/ui";
+import { FilterChips } from "@/components/Filters";
 import { Pagination } from "@/components/Pagination";
+import { RARITY_OPTIONS } from "@/lib/url";
 
 export const metadata: Metadata = { title: "Items" };
 
 export default async function ItemsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; type?: string }>;
+  searchParams: Promise<{ page?: string; type?: string; rarity?: string }>;
 }) {
-  const { page, type } = await searchParams;
-  const items = await api.items({ page, per_page: 60, "filter[type]": type, sort: "name" });
+  const { page, type, rarity } = await searchParams;
+  const items = await api.items({
+    page,
+    per_page: 60,
+    "filter[type]": type,
+    "filter[rarity]": rarity,
+    sort: "name",
+  });
 
   return (
     <div>
       <PageHeading title="Items" subtitle={`${items.meta.total} items`} />
+
+      <div className="mb-6">
+        <FilterChips label="Rarity" param="rarity" options={RARITY_OPTIONS} active={rarity} basePath="/items" query={{ type, rarity }} />
+      </div>
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {items.data.map((item) => (
@@ -38,7 +50,7 @@ export default async function ItemsPage({
 
       <Pagination
         basePath="/items"
-        query={{ page, type }}
+        query={{ page, type, rarity }}
         currentPage={items.meta.current_page}
         lastPage={items.meta.last_page}
         total={items.meta.total}

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { api } from "@/lib/api/client";
 import { Card, Icon, PageHeading, RarityBadge } from "@/components/ui";
+import { FilterChips } from "@/components/Filters";
 import { Pagination } from "@/components/Pagination";
+import { RARITY_OPTIONS } from "@/lib/url";
 
 export const metadata: Metadata = { title: "Weapons" };
 
@@ -10,40 +11,28 @@ const WEAPON_TYPES = [
   "Great Sword", "Long Sword", "Sword and Shield", "Dual Blades", "Hammer",
   "Hunting Horn", "Lance", "Gunlance", "Switch Axe", "Charge Blade",
   "Insect Glaive", "Light Bowgun", "Heavy Bowgun", "Bow",
-];
+].map((type) => ({ value: type, label: type }));
 
 export default async function WeaponsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; wtype?: string }>;
+  searchParams: Promise<{ page?: string; wtype?: string; rarity?: string }>;
 }) {
-  const { page, wtype } = await searchParams;
-  const weapons = await api.weapons({ page, per_page: 50, "filter[wtype]": wtype });
+  const { page, wtype, rarity } = await searchParams;
+  const weapons = await api.weapons({
+    page,
+    per_page: 50,
+    "filter[wtype]": wtype,
+    "filter[rarity]": rarity,
+  });
 
   return (
     <div>
       <PageHeading title="Weapons" subtitle={`${weapons.meta.total} weapons`} />
 
-      <div className="mb-6 flex flex-wrap gap-1.5">
-        <Link
-          href="/weapons"
-          className={`rounded-full px-3 py-1 text-xs transition ${
-            !wtype ? "bg-accent text-black" : "border border-white/15 text-white/70 hover:text-white"
-          }`}
-        >
-          All
-        </Link>
-        {WEAPON_TYPES.map((type) => (
-          <Link
-            key={type}
-            href={`/weapons?wtype=${encodeURIComponent(type)}`}
-            className={`rounded-full px-3 py-1 text-xs transition ${
-              wtype === type ? "bg-accent text-black" : "border border-white/15 text-white/70 hover:text-white"
-            }`}
-          >
-            {type}
-          </Link>
-        ))}
+      <div className="mb-6 space-y-3">
+        <FilterChips label="Type" param="wtype" options={WEAPON_TYPES} active={wtype} basePath="/weapons" query={{ wtype, rarity }} />
+        <FilterChips label="Rarity" param="rarity" options={RARITY_OPTIONS} active={rarity} basePath="/weapons" query={{ wtype, rarity }} />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -67,7 +56,7 @@ export default async function WeaponsPage({
 
       <Pagination
         basePath="/weapons"
-        query={{ page, wtype }}
+        query={{ page, wtype, rarity }}
         currentPage={weapons.meta.current_page}
         lastPage={weapons.meta.last_page}
         total={weapons.meta.total}

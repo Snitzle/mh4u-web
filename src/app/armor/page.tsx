@@ -1,45 +1,34 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { api } from "@/lib/api/client";
 import { Card, Icon, PageHeading, RarityBadge } from "@/components/ui";
+import { FilterChips } from "@/components/Filters";
 import { Pagination } from "@/components/Pagination";
+import { RARITY_OPTIONS } from "@/lib/url";
 
 export const metadata: Metadata = { title: "Armor" };
 
-const SLOTS = ["Head", "Body", "Arms", "Waist", "Legs"];
+const SLOTS = ["Head", "Body", "Arms", "Waist", "Legs"].map((slot) => ({ value: slot, label: slot }));
 
 export default async function ArmorPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; slot?: string }>;
+  searchParams: Promise<{ page?: string; slot?: string; rarity?: string }>;
 }) {
-  const { page, slot } = await searchParams;
-  const armor = await api.armorList({ page, per_page: 50, "filter[slot]": slot });
+  const { page, slot, rarity } = await searchParams;
+  const armor = await api.armorList({
+    page,
+    per_page: 50,
+    "filter[slot]": slot,
+    "filter[rarity]": rarity,
+  });
 
   return (
     <div>
       <PageHeading title="Armor" subtitle={`${armor.meta.total} pieces`} />
 
-      <div className="mb-6 flex flex-wrap gap-1.5">
-        <Link
-          href="/armor"
-          className={`rounded-full px-3 py-1 text-xs transition ${
-            !slot ? "bg-accent text-black" : "border border-white/15 text-white/70 hover:text-white"
-          }`}
-        >
-          All
-        </Link>
-        {SLOTS.map((option) => (
-          <Link
-            key={option}
-            href={`/armor?slot=${option}`}
-            className={`rounded-full px-3 py-1 text-xs transition ${
-              slot === option ? "bg-accent text-black" : "border border-white/15 text-white/70 hover:text-white"
-            }`}
-          >
-            {option}
-          </Link>
-        ))}
+      <div className="mb-6 space-y-3">
+        <FilterChips label="Slot" param="slot" options={SLOTS} active={slot} basePath="/armor" query={{ slot, rarity }} />
+        <FilterChips label="Rarity" param="rarity" options={RARITY_OPTIONS} active={rarity} basePath="/armor" query={{ slot, rarity }} />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -64,7 +53,7 @@ export default async function ArmorPage({
 
       <Pagination
         basePath="/armor"
-        query={{ page, slot }}
+        query={{ page, slot, rarity }}
         currentPage={armor.meta.current_page}
         lastPage={armor.meta.last_page}
         total={armor.meta.total}
