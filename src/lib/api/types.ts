@@ -69,14 +69,47 @@ export interface MonsterHabitat {
   location?: LocationSummary;
 }
 
+export interface MonsterStaggerLimit {
+  region: string;
+  value: number | null;
+  value_cut: number | null;
+  extract_color: string | null;
+}
+
+export interface MonsterTrapEffect {
+  trap: string;
+  normal: number | null;
+  enraged: number | null;
+  fatigued: number | null;
+}
+
 export interface Monster extends MonsterSummary {
   signature_move: string;
   trait: string;
+  ecology: string | null;
+  hp: {
+    base: number;
+    low_multiplier: number | null;
+    high_multiplier: number | null;
+    g_multiplier: number | null;
+  } | null;
+  size_class: string | null;
+  crowns: { mini: number | null; large: number | null; king: number | null } | null;
+  enraged: {
+    duration: number | null;
+    attack_modifier: number | null;
+    defense_modifier: number | null;
+    speed_modifier: number | null;
+  } | null;
+  limping: Record<string, number> | null;
+  capture: Record<string, number> | null;
   damage?: MonsterDamage[];
   weaknesses?: MonsterWeakness[];
   statuses?: MonsterStatus[];
   ailments?: string[];
   habitats?: MonsterHabitat[];
+  stagger_limits?: MonsterStaggerLimit[];
+  trap_effects?: MonsterTrapEffect[];
   hunting_rewards?: Record<string, HuntingReward[]>;
   quests?: QuestSummary[];
 }

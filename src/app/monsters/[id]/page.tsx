@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { api } from "@/lib/api/client";
 import type { Monster } from "@/lib/api/types";
 import { Card, Icon, Pill, Section } from "@/components/ui";
+import type { ReactNode } from "react";
 
 async function load(id: string): Promise<Monster> {
   try {
@@ -72,6 +73,40 @@ function cell(value: number | null): string {
   return String(value);
 }
 
+function StatCard({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="mb-2 text-[11px] uppercase tracking-wide text-white/30">{title}</div>
+      {children}
+    </div>
+  );
+}
+
+const THRESHOLD_LABELS: Record<string, string> = {
+  low: "LR",
+  high: "HR",
+  high_apex: "HR Apex",
+  g: "G",
+  g_apex: "G Apex",
+};
+
+function ThresholdLine({ label, values }: { label: string; values: Record<string, number> }) {
+  const parts = Object.keys(THRESHOLD_LABELS)
+    .filter((key) => values[key] != null)
+    .map((key) => `${THRESHOLD_LABELS[key]} ${values[key]}%`);
+  if (parts.length === 0) return null;
+  return (
+    <div className="text-sm text-white/70">
+      <span className="text-white/40">{label}: </span>
+      <span className="tabular-nums">{parts.join(" · ")}</span>
+    </div>
+  );
+}
+
+function joinDot(parts: (string | false | null | undefined)[]): string {
+  return parts.filter(Boolean).join(" · ");
+}
+
 export default async function MonsterPage({
   params,
 }: {
@@ -92,6 +127,62 @@ export default async function MonsterPage({
           </div>
         </div>
       </div>
+
+      {monster.ecology && (
+        <p className="mt-4 max-w-3xl text-sm leading-relaxed text-white/60">{monster.ecology}</p>
+      )}
+
+      {(monster.hp || monster.crowns || monster.enraged || monster.limping || monster.capture) && (
+        <Section title="Vitals">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {monster.hp && (
+              <StatCard title="HP">
+                <div className="text-2xl font-bold tabular-nums text-white">
+                  {monster.hp.base.toLocaleString()}
+                </div>
+                <div className="mt-1 text-xs text-white/50">
+                  {joinDot([
+                    monster.hp.low_multiplier != null && `LR ×${monster.hp.low_multiplier}`,
+                    monster.hp.high_multiplier != null && `HR ×${monster.hp.high_multiplier}`,
+                    monster.hp.g_multiplier != null && `G ×${monster.hp.g_multiplier}`,
+                  ])}
+                </div>
+              </StatCard>
+            )}
+            {monster.enraged && (
+              <StatCard title="Enraged">
+                <div className="text-sm tabular-nums text-white/80">
+                  {joinDot([
+                    monster.enraged.attack_modifier != null && `ATK ×${monster.enraged.attack_modifier}`,
+                    monster.enraged.defense_modifier != null && `DEF ×${monster.enraged.defense_modifier}`,
+                    monster.enraged.speed_modifier != null && `SPD ×${monster.enraged.speed_modifier}`,
+                  ])}
+                </div>
+                {monster.enraged.duration != null && (
+                  <div className="mt-1 text-xs text-white/50">~{monster.enraged.duration}s</div>
+                )}
+              </StatCard>
+            )}
+            {monster.crowns && (
+              <StatCard title="Crown sizes">
+                <div className="space-y-0.5 text-sm tabular-nums text-white/80">
+                  {monster.crowns.mini != null && <div>Mini ≤ {monster.crowns.mini}</div>}
+                  {monster.crowns.large != null && <div>Large ≥ {monster.crowns.large}</div>}
+                  {monster.crowns.king != null && <div>King ≥ {monster.crowns.king}</div>}
+                </div>
+              </StatCard>
+            )}
+            {(monster.capture || monster.limping) && (
+              <StatCard title="Capture / Limp (% of HP)">
+                <div className="space-y-1">
+                  {monster.capture && <ThresholdLine label="Capturable" values={monster.capture} />}
+                  {monster.limping && <ThresholdLine label="Limping" values={monster.limping} />}
+                </div>
+              </StatCard>
+            )}
+          </div>
+        </Section>
+      )}
 
       {monster.ailments && monster.ailments.length > 0 && (
         <Section title="Inflicts">
@@ -158,6 +249,25 @@ export default async function MonsterPage({
         </Section>
       )}
 
+      {monster.stagger_limits && monster.stagger_limits.length > 0 && (
+        <Section title="Stagger / break thresholds">
+          <div className="flex flex-wrap gap-2">
+            {monster.stagger_limits.map((stagger, index) => (
+              <div
+                key={index}
+                className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm"
+              >
+                <span className="text-white/80">{stagger.region}</span>{" "}
+                <span className="tabular-nums text-white/50">
+                  {stagger.value ?? "—"}
+                  {stagger.value_cut != null ? ` / ${stagger.value_cut}` : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
       {monster.statuses && monster.statuses.length > 0 && (
         <Section title="Status tolerance">
           <div className="overflow-x-auto rounded-xl border border-white/10">
@@ -183,6 +293,33 @@ export default async function MonsterPage({
                       {status.duration ? `${status.duration}s` : "—"}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums text-white/70">{status.damage || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      )}
+
+      {monster.trap_effects && monster.trap_effects.length > 0 && (
+        <Section title="Trap & bomb effect (seconds)">
+          <div className="overflow-x-auto rounded-xl border border-white/10">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[11px] uppercase tracking-wide text-white/40">
+                  <th className="px-3 py-2">Item</th>
+                  <th className="px-3 py-2 text-right">Normal</th>
+                  <th className="px-3 py-2 text-right">Enraged</th>
+                  <th className="px-3 py-2 text-right">Fatigued</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monster.trap_effects.map((trap, index) => (
+                  <tr key={index} className="border-t border-white/5">
+                    <td className="px-3 py-2 font-medium text-white/90">{trap.trap}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-white/70">{cell(trap.normal)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-white/70">{cell(trap.enraged)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-white/70">{cell(trap.fatigued)}</td>
                   </tr>
                 ))}
               </tbody>
