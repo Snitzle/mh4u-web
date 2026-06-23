@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated API types + spec snapshot (run `npm run generate:api` against the live API)
+/src/lib/api/schema.d.ts
+/openapi
